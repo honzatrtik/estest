@@ -1,0 +1,12 @@
+{
+  "name": "honzatrtik/estest",
+  "description": "Event sourcing test",
+  "minimum-stability": "dev",
+  "license": "proprietary",
+  "authors": [
+	{
+	  "name": "Honza Trtik",
+	  "email": "honza.trtik@gmail.com"
+	}
+  ]
+}
