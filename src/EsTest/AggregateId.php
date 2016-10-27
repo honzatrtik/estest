@@ -26,7 +26,11 @@ class AggregateId {
 		return (string) $this === (string) $aggregateId;
 	}
 
-	public function __toString() {
+	public function toString() {
 		return $this->uuid->toString();
+	}
+
+	public function __toString() {
+		return $this->toString();
 	}
 }
