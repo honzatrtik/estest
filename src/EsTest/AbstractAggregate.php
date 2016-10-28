@@ -3,25 +3,26 @@
 namespace EsTest;
 
 use EsTest\Event\DomainEvent;
+use EsTest\Event\DomainEventList;
 use RuntimeException;
 
 class AbstractAggregate {
 
-	private $uncommitedEvents = [];
+	private $notPersistedEvents = [];
 
-	protected function handle(DomainEvent $event, $isUncommited = false) {
+	protected function handle(DomainEvent $event, $persisted = false) {
 		$eventName = $event->getEventName();
 		$handler = [$this, 'handle' . ucfirst($eventName)];
 		if (!is_callable($handler)) {
 			throw new RuntimeException("Can not handle event '{$eventName}', ");
 		}
 		$handler($event);
-		if ($isUncommited) {
-			$this->uncommitedEvents[] = $event;
+		if (!$persisted) {
+			$this->notPersistedEvents[] = $event;
 		}
 	}
 
-	public function getUncommitedEvents() {
-		return $this->uncommitedEvents;
+	public function getNotPersistedEventList() {
+		return new DomainEventList($this->notPersistedEvents);
 	}
 }

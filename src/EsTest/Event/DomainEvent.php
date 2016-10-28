@@ -7,24 +7,31 @@ use EsTest\AggregateId;
 
 abstract class DomainEvent {
 
+	protected $id;
+
 	/** @var AggregateId */
 	protected $aggregateId;
 
-	/** @var DateTime */
+	/** @var DateTimeImmutable */
 	protected $created;
 
 	public function __construct(AggregateId $aggregateId) {
 		$this->aggregateId = $aggregateId;
-		$this->created = new DateTimeImmutable(); // It'd be better with microtime support
+		$this->created = new DateTimeImmutable();
+	}
+
+	public function getId() {
+		return $this->id;
+	}
+
+	public function setId($id) {
+		$this->id = $id;
 	}
 
 	public function getAggregateId() {
 		return $this->aggregateId;
 	}
 
-	/**
-	 * @return DateTimeImmutable
-	 */
 	public function getCreated() {
 		return $this->created;
 	}

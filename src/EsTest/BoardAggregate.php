@@ -3,6 +3,7 @@
 namespace EsTest;
 
 use EsTest\Event\BoardWasCreatedEvent;
+use EsTest\Event\DomainEventList;
 use EsTest\Event\PlayerMovedEvent;
 use EsTest\Event\PlayerJoinedEvent;
 use EsTest\Event\PlayerWonEvent;
@@ -38,14 +39,14 @@ class BoardAggregate extends AbstractAggregate {
 
 	public static function create(AggregateId $boardId) {
 		$board = new static($boardId);
-		$board->handle(new BoardWasCreatedEvent($boardId), true);
+		$board->handle(new BoardWasCreatedEvent($boardId));
 		return $board;
 	}
 
-	public static function loadFromHistory(AggregateId $boardId, array $events) {
+	public static function loadFromHistory(AggregateId $boardId, DomainEventList $events) {
 		$board = new static($boardId);
 		foreach ($events as $event) {
-			$board->handle($event);
+			$board->handle($event, true);
 		}
 		return $board;
 	}
@@ -55,7 +56,7 @@ class BoardAggregate extends AbstractAggregate {
 		if (isset($this->players[$playerType->getValue()])) {
 			throw new RuntimeException("Player {$playerType->getValue()} already joined board {$this->boardId}");
 		}
-		$this->handle(new PlayerJoinedEvent($this->boardId, $player), true);
+		$this->handle(new PlayerJoinedEvent($this->boardId, $player));
 	}
 
 	public function move(Player $player, $x, $y) {
@@ -77,9 +78,9 @@ class BoardAggregate extends AbstractAggregate {
 		if ($this->isPositionFree($x, $y)) {
 			throw new RuntimeException("Position is not free [{$x}, {$y}]");
 		}
-		$this->handle(new PlayerMovedEvent($this->boardId, $player, $x, $y), true);
+		$this->handle(new PlayerMovedEvent($this->boardId, $player, $x, $y));
 		if ($this->isFinalMove()) {
-			$this->handle(new PlayerWonEvent($this->boardId, $player), true);
+			$this->handle(new PlayerWonEvent($this->boardId, $player));
 		}
 	}
 

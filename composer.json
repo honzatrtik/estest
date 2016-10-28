@@ -11,12 +11,13 @@
   ],
   "require": {
     "ramsey/uuid": "4.x-dev",
-    "myclabs/php-enum": "^1.5",
+    "myclabs/php-enum": "1.5",
     "silex/silex": "v1.3.5",
     "php-di/silex-bridge": "1.5.1",
     "php-di/php-di": "5.4.0",
-    "doctrine/cache": "1.6",
-    "danielmewes/php-rql": "2.3.0"
+    "danielmewes/php-rql": "2.3.0",
+    "doctrine/dbal": "v2.5.5",
+    "bunny/bunny": "v0.2.4"
   },
   "autoload": {
 	"psr-4": {"": "src/"}
