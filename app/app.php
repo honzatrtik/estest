@@ -5,6 +5,7 @@ use EsTest\AggregateId;
 use EsTest\BoardAggregate;
 use EsTest\Event\DomainEvent;
 use EsTest\Event\Persister\EventPersisterInterface;
+use EsTest\Event\Publisher\EventPublisherInterface;
 use EsTest\Event\Repository\EventRepository;
 use EsTest\Player\Player;
 use EsTest\Player\PlayerType;
@@ -29,7 +30,13 @@ $app->get('/uuid', function(Application $app,\Doctrine\DBAL\Connection $c) {
 	return $app->json((string) AggregateId::create());
 });
 
-$app->post('/game/create/{uuid}', function($uuid, Request $request, Application $app, EventPersisterInterface $persister) {
+$app->post('/game/create/{uuid}', function(
+	$uuid,
+	Request $request,
+	Application $app,
+	EventPersisterInterface $persister,
+	EventPublisherInterface $publisher
+) {
 
 	if (!($token = $request->request->get('token'))) {
 		return $app->abort(400, 'Missing token');
@@ -42,7 +49,11 @@ $app->post('/game/create/{uuid}', function($uuid, Request $request, Application 
 		$board = BoardAggregate::create(AggregateId::createFromString($uuid));
 		$playerType = new PlayerType($request->request->get('type'));
 		$board->join(new Player($playerType, $token));
-		$persister->persistList($board->getNotPersistedEventList());
+		$events = $board->getNotPersistedEventList();
+		$persister->persistList($events);
+		foreach($events as $event) {
+			$publisher->publish($event);
+		}
 		return new Response('', 201);
 	}
 	catch (RuntimeException $e) {
@@ -50,7 +61,14 @@ $app->post('/game/create/{uuid}', function($uuid, Request $request, Application 
 	}
 });
 
-$app->post('/game/join/{uuid}', function($uuid, Request $request, Application $app, EventPersisterInterface $persister, EventRepository $repository) {
+$app->post('/game/join/{uuid}', function(
+	$uuid,
+	Request $request,
+	Application $app,
+	EventPersisterInterface $persister,
+	EventPublisherInterface $eventPublisher,
+	EventRepository $repository
+) {
 	$boardId = AggregateId::createFromString($uuid);
 	$eventList = $repository->fetchListByAggregateId($boardId);
 	if (!$eventList) {
@@ -67,7 +85,11 @@ $app->post('/game/join/{uuid}', function($uuid, Request $request, Application $a
 		$board = BoardAggregate::loadFromHistory($boardId, $eventList);
 		$playerType = new PlayerType($request->request->get('type'));
 		$board->join(new Player($playerType, $token));
-		$persister->persistList($board->getNotPersistedEventList());
+		$events = $board->getNotPersistedEventList();
+		$persister->persistList($events);
+		foreach($events as $event) {
+			$eventPublisher->publish($event);
+		}
 		return new Response('', 201);
 	}
 	catch (RuntimeException $e) {
@@ -76,7 +98,14 @@ $app->post('/game/join/{uuid}', function($uuid, Request $request, Application $a
 });
 
 
-$app->post('/game/move/{uuid}', function($uuid, Request $request, Application $app, EventPersisterInterface $persister, EventRepository $repository) {
+$app->post('/game/move/{uuid}', function(
+	$uuid,
+	Request $request,
+	Application $app,
+	EventPersisterInterface $persister,
+	EventPublisherInterface $publisher,
+	EventRepository $repository
+) {
 	$boardId = AggregateId::createFromString($uuid);
 	$eventList = $repository->fetchListByAggregateId($boardId);
 	if (!$eventList) {
@@ -99,7 +128,11 @@ $app->post('/game/move/{uuid}', function($uuid, Request $request, Application $a
 	try {
 		$playerType = new PlayerType($type);
 		$board->move(new Player($playerType, $token), $x, $y);
-		$persister->persistList($board->getNotPersistedEventList());
+		$events = $board->getNotPersistedEventList();
+		$persister->persistList($events);
+		foreach($events as $event) {
+			$publisher->publish($event);
+		}
 		return new Response('', 201);
 	}
 	catch (RuntimeException $e) {

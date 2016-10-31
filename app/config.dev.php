@@ -15,5 +15,11 @@ return [
 		'password' => DI\get('db.password'),
 		'port' => DI\get('db.port'),
 		'driver' => DI\get('db.driver'),
-	]
+	],
+
+	'rmq.host' => '10.211.55.12',
+
+	'rmq.options' => [
+		'host' => DI\get('rmq.host'),
+	],
 ];
