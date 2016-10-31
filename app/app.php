@@ -35,20 +35,13 @@ $app->post('/game/create/{uuid}', function(
 	Request $request,
 	Application $app,
 	EventPersisterInterface $persister,
-	EventPublisherInterface $publisher
+	EventPublisherInterface $publisher,
+	EventRepository $repository
 ) {
-
-	if (!($token = $request->request->get('token'))) {
-		return $app->abort(400, 'Missing token');
-	}
-	if (!($type = $request->request->get('type'))) {
-		return $app->abort(400, 'Missing type');
-	}
-
 	try {
-		$board = BoardAggregate::create(AggregateId::createFromString($uuid));
-		$playerType = new PlayerType($request->request->get('type'));
-		$board->join(new Player($playerType, $token));
+		$boardId = AggregateId::createFromString($uuid);
+		$board = BoardAggregate::loadFromHistory($boardId, $repository->fetchListByAggregateId($boardId));
+		$board->create($boardId);
 		$events = $board->getNotPersistedEventList();
 		$persister->persistList($events);
 		foreach($events as $event) {
