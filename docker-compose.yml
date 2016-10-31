@@ -1,0 +1,20 @@
+version: '2'
+services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: rabbitmq
+    ports:
+      - "8087:15672"
+      - "5672:5672"
+    environment:
+      - "RABBITMQ_DEFAULT_VHOST=/"
+
+  mysql:
+    image: mysql:5.7
+    ports:
+      - "3307:3306"
+    environment:
+      - "MYSQL_ROOT_PASSWORD=root"
+      - "MYSQL_DATABASE=estest"
+
