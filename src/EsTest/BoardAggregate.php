@@ -37,7 +37,7 @@ class BoardAggregate extends AbstractAggregate {
 		$this->winnerPlayer = null;
 	}
 
-	public static function create(AggregateId $boardId) {
+	public static function create(AggregateId $boardId): BoardAggregate {
 		$board = new static($boardId);
 		$board->handle(new BoardWasCreatedEvent($boardId));
 		return $board;

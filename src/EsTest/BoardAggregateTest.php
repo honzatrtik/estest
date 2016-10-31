@@ -3,6 +3,7 @@
 namespace EsTest;
 
 use EsTest\Event\BoardWasCreatedEvent;
+use EsTest\Event\DomainEventList;
 use EsTest\Event\PlayerJoinedEvent;
 use EsTest\Event\PlayerWonEvent;
 use EsTest\Player\Player;
@@ -41,7 +42,7 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 		$board = BoardAggregate::create($this->createAggregateId());
 		$this->assertInstanceOf(BoardAggregate::class, $board);
 
-		$events = $board->getUncommitedEvents();
+		$events = $board->getNotPersistedEventList();
 		$this->assertCount(1, $events);
 		$this->assertInstanceOf(BoardWasCreatedEvent::class, $events[0]);
 	}
@@ -53,7 +54,7 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 		$board->join($playerX);
 		$board->join($playerO);
 
-		$events = $board->getUncommitedEvents();
+		$events = $board->getNotPersistedEventList();
 		$this->assertCount(3, $events);
 
 		$this->assertInstanceOf(BoardWasCreatedEvent::class, $events[0]);
@@ -172,14 +173,14 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 		$board->move($playerO, 10, 3);
 		$board->move($playerX, 0, 4);
 
-		$events = $board->getUncommitedEvents();
-		$lastEvent = end($events);
+		$events = $board->getNotPersistedEventList();
+		$lastEvent = $events[count($events) - 1];
 		$this->assertInstanceOf(PlayerWonEvent::class, $lastEvent);
 		$this->assertEquals($playerX, $lastEvent->getPlayer());
 	}
 
 	public function testLoadFromHistory() {
-		$board = BoardAggregate::loadFromHistory($this->createAggregateId(), []);
+		$board = BoardAggregate::loadFromHistory($this->createAggregateId(), new DomainEventList([]));
 		$this->assertInstanceOf(BoardAggregate::class, $board);
 	}
 
