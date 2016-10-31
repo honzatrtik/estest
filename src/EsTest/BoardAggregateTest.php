@@ -39,7 +39,9 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testCreateBoard() {
-		$board = BoardAggregate::create($this->createAggregateId());
+		$boardId = $this->createAggregateId();
+		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
+		$board->create($boardId);
 		$this->assertInstanceOf(BoardAggregate::class, $board);
 
 		$events = $board->getNotPersistedEventList();
@@ -47,8 +49,22 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 		$this->assertInstanceOf(BoardWasCreatedEvent::class, $events[0]);
 	}
 
+	public function testCreateAlreadyCreatedBoard() {
+		$boardId = $this->createAggregateId();
+		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
+		$board->create($boardId);
+		try {
+			$board->create($boardId);
+			$this->fail('Can not create already created board.');
+		} catch (Exception $e) {
+			$this->assertInstanceOf(RuntimeException::class, $e);
+		}
+	}
+
 	public function testJoinPlayers() {
-		$board = BoardAggregate::create($this->createAggregateId());
+		$boardId = $this->createAggregateId();
+		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
+		$board->create($boardId);
 		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
 		$playerO = $this->createPlayer(PlayerType::O(), 'efg');
 		$board->join($playerX);
@@ -66,7 +82,9 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testJoinPlayersAlreadyJoined() {
-		$board = BoardAggregate::create($this->createAggregateId());
+		$boardId = $this->createAggregateId();
+		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
+		$board->create($boardId);
 		$board->join($this->createPlayer(PlayerType::X(), 'abc'));
 		try {
 			$board->join($this->createPlayer(PlayerType::X(), 'abc'));
@@ -77,7 +95,9 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testMoveWithoutBothPlayersJoined() {
-		$board = BoardAggregate::create($this->createAggregateId());
+		$boardId = $this->createAggregateId();
+		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
+		$board->create($boardId);
 		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
 		$board->join($playerX);
 		try {
@@ -89,7 +109,9 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testMovePlayerInvalidToken() {
-		$board = BoardAggregate::create($this->createAggregateId());
+		$boardId = $this->createAggregateId();
+		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
+		$board->create($boardId);
 		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
 		$playerO = $this->createPlayer(PlayerType::O(), 'cde');
 		$board->join($playerX);
@@ -105,7 +127,9 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testMoveOutOfBoard() {
-		$board = BoardAggregate::create($this->createAggregateId());
+		$boardId = $this->createAggregateId();
+		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
+		$board->create($boardId);
 		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
 		$playerO = $this->createPlayer(PlayerType::O(), 'cde');
 		$board->join($playerX);
@@ -120,7 +144,9 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testMoveSamePlayerTwice() {
-		$board = BoardAggregate::create($this->createAggregateId());
+		$boardId = $this->createAggregateId();
+		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
+		$board->create($boardId);
 
 		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
 		$playerO = $this->createPlayer(PlayerType::O(), 'cde');
@@ -138,7 +164,9 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testMoveToTakenPlace() {
-		$board = BoardAggregate::create($this->createAggregateId());
+		$boardId = $this->createAggregateId();
+		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
+		$board->create($boardId);
 
 		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
 		$playerO = $this->createPlayer(PlayerType::O(), 'cde');
@@ -156,7 +184,9 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testMoveToWin() {
-		$board = BoardAggregate::create($this->createAggregateId());
+		$boardId = $this->createAggregateId();
+		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
+		$board->create($boardId);
 
 		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
 		$playerO = $this->createPlayer(PlayerType::O(), 'cde');

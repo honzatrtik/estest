@@ -37,11 +37,6 @@ class BoardAggregate extends AbstractAggregate {
 		$this->winnerPlayer = null;
 	}
 
-	public static function create(AggregateId $boardId): BoardAggregate {
-		$board = new static($boardId);
-		$board->handle(new BoardWasCreatedEvent($boardId));
-		return $board;
-	}
 
 	public static function loadFromHistory(AggregateId $boardId, DomainEventList $events) {
 		$board = new static($boardId);
@@ -49,6 +44,13 @@ class BoardAggregate extends AbstractAggregate {
 			$board->handle($event, true);
 		}
 		return $board;
+	}
+
+	public function create(AggregateId $boardId) {
+		if (!empty($this->board)) {
+			throw new RuntimeException("Board {$this->boardId} was already created");
+		}
+		$this->handle(new BoardWasCreatedEvent($boardId));
 	}
 
 	public function join(Player $player) {
