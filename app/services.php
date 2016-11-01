@@ -11,6 +11,8 @@ use EsTest\Event\Publisher\EventPublisherInterface;
 use function DI\factory;
 use function DI\get;
 use function DI\object;
+use EsTest\Property\FilePropertyRepository;
+use EsTest\Property\PropertyRepositoryInterface;
 use Interop\Container\ContainerInterface;
 
 return [
@@ -18,6 +20,8 @@ return [
 		->parameter('params', get('db.params')),
 	EventPersisterInterface::class => object(EventPersister::class),
 	EventPublisherInterface::class => object(EventPublisher::class),
+	PropertyRepositoryInterface::class => object(FilePropertyRepository::class)
+		->constructorParameter('directory', get('tempDir')),
 	Client::class => object(Client::class)
 		->constructorParameter('options', get('rmq.options'))
 		->method('connect'),

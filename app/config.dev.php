@@ -1,6 +1,8 @@
 <?php
 
 return [
+
+	'tempDir' => __DIR__ . '/../temp',
 	'db.host' => '10.211.55.12',
 	'db.dbname' => 'estest',
 	'db.user' => 'root',
