@@ -11,6 +11,7 @@ use EsTest\Event\Publisher\EventPublisherInterface;
 use function DI\factory;
 use function DI\get;
 use function DI\object;
+use Interop\Container\ContainerInterface;
 
 return [
 	Connection::class => factory([DriverManager::class, 'getConnection'])
@@ -20,4 +21,7 @@ return [
 	Client::class => object(Client::class)
 		->constructorParameter('options', get('rmq.options'))
 		->method('connect'),
+	r\Connection::class => function(ContainerInterface $c) {
+		return r\connect($c->get('rethink.host'));
+	},
 ];

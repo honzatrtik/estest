@@ -32,6 +32,16 @@ class EventRepository {
 		return $this->hydrateList($rows);
 	}
 
+	public function fetchListEventIdGreaterThan($eventId) {
+		$rows = $this->createQueryBuilder()
+			->where('e.id > :eventId')
+			->setParameter(':eventId', $eventId)
+			->execute()
+			->fetchAll();
+
+		return $this->hydrateList($rows);
+	}
+
 	private function createQueryBuilder() {
 		return $this->connection->createQueryBuilder()
 			->select('e.*')

@@ -110,10 +110,10 @@ $app->post('/game/move/{uuid}', function(
 	if (!($type = $request->request->get('type'))) {
 		return $app->abort(400, 'Missing type');
 	}
-	if (!($x = $request->request->get('x'))) {
+	if (($x = $request->request->get('x')) === null) {
 		return $app->abort(400, 'Missing x');
 	}
-	if (!($y = $request->request->get('y'))) {
+	if (($y = $request->request->get('y')) === null) {
 		return $app->abort(400, 'Missing y');
 	}
 

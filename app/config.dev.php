@@ -22,4 +22,6 @@ return [
 	'rmq.options' => [
 		'host' => DI\get('rmq.host'),
 	],
+
+	'rethink.host' => '10.211.55.12',
 ];
