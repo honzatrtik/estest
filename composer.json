@@ -17,7 +17,8 @@
     "php-di/php-di": "5.4.0",
     "danielmewes/php-rql": "2.3.0",
     "doctrine/dbal": "v2.5.5",
-    "bunny/bunny": "v0.2.4"
+    "bunny/bunny": "v0.2.4",
+    "tracy/tracy": "v2.4.3"
   },
   "autoload": {
 	"psr-4": {"": "src/"}
