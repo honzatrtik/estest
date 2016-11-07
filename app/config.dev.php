@@ -7,8 +7,8 @@ return [
 	'db.dbname' => 'estest',
 	'db.user' => 'root',
 	'db.password' => 'root',
-	'db.port' => 3307,
-	'db.driver' => 'pdo_mysql',
+	'db.port' => 3306,
+	'db.driver' => 'mysqli',
 
 	'db.params' => [
 		'host' => DI\get('db.host'),

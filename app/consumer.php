@@ -20,5 +20,5 @@ $projectorSubsciber = new ProjectorSubscriber(
 	$di->get(EventRepository::class),
 	$di->get(PropertyRepositoryInterface::class)
 );
-$projectorSubsciber->reset();
+//$projectorSubsciber->reset();
 $projectorSubsciber->subscribe();

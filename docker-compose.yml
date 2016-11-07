@@ -2,7 +2,8 @@ version: '2'
 services:
 
   api:
-    image: php:7.0.12-alpine
+    build: ./docker/php
+    image: estest-php
     volumes:
       - ".:/data"
     command: php -S 0.0.0.0:8000 /data/app/app.php
@@ -13,7 +14,7 @@ services:
       - rabbitmq
 
   consumer:
-    build: ./docker/php
+    image: estest-php
     volumes:
       - ".:/data"
     command: /data/wait-for-it.sh rabbitmq:5672 -- php /data/app/consumer.php
