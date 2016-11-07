@@ -8,6 +8,7 @@ use Bunny\Message;
 use EsTest\Event\DomainEvent;
 use EsTest\Event\Publisher\EventPublisher;
 use EsTest\Event\Repository\EventRepository;
+use EsTest\Property\PropertyRepositoryInterface;
 
 class ProjectorSubscriber {
 
@@ -15,13 +16,21 @@ class ProjectorSubscriber {
 	private $bunny;
 	private $projector;
 	private $repository;
+	private $propertyRepository;
 
 
-	public function __construct($projectorId, Client $bunny, ProjectorInterface $projector, EventRepository $repository) {
+	public function __construct(
+		$projectorId,
+		Client $bunny,
+		ProjectorInterface $projector,
+		EventRepository $repository,
+		PropertyRepositoryInterface $propertyRepository
+	) {
 		$this->projectorId = $projectorId;
 		$this->bunny = $bunny;
 		$this->projector = $projector;
 		$this->repository = $repository;
+		$this->propertyRepository = $propertyRepository;
 	}
 
 	public function reset() {
@@ -65,15 +74,11 @@ class ProjectorSubscriber {
 	}
 
 	protected function loadLastEventId() {
-		$file = __DIR__ . "/projector-{$this->projectorId}";
-		return file_exists($file)
-			? (int) file_get_contents($file)
-			: null;
+		return $this->propertyRepository->load(__CLASS__ . $this->projectorId);
 	}
 
 	protected function saveLastEventId($lastEventId) {
-		$file = __DIR__ . "/projector-{$this->projectorId}";
-		file_put_contents($file, $lastEventId);
+		$this->propertyRepository->save(__CLASS__ . $this->projectorId, $lastEventId);
 	}
 
 

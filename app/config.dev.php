@@ -3,7 +3,7 @@
 return [
 
 	'tempDir' => __DIR__ . '/../temp',
-	'db.host' => '10.211.55.12',
+	'db.host' => 'mysql',
 	'db.dbname' => 'estest',
 	'db.user' => 'root',
 	'db.password' => 'root',
@@ -19,11 +19,11 @@ return [
 		'driver' => DI\get('db.driver'),
 	],
 
-	'rmq.host' => '10.211.55.12',
+	'rmq.host' => 'rabbitmq',
 
 	'rmq.options' => [
 		'host' => DI\get('rmq.host'),
 	],
 
-	'rethink.host' => '10.211.55.12',
+	'rethink.host' => 'rethinkdb',
 ];

@@ -76,7 +76,7 @@ $app->post('/game/join/{uuid}', function(
 
 	try {
 		$board = BoardAggregate::loadFromHistory($boardId, $eventList);
-		$playerType = new PlayerType($request->request->get('type'));
+		$playerType = new PlayerType($type);
 		$board->join(new Player($playerType, $token));
 		$events = $board->getNotPersistedEventList();
 		$persister->persistList($events);
