@@ -7,7 +7,7 @@ use EsTest\Event\DomainEvent;
 use EsTest\Event\Persister\EventPersisterInterface;
 use EsTest\Event\Publisher\EventPublisherInterface;
 use EsTest\Event\Repository\EventRepository;
-use EsTest\Player\Player;
+use EsTest\Player\PlayerToken;
 use EsTest\Player\PlayerType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -73,11 +73,13 @@ $app->post('/game/join/{uuid}', function(
 	if (!($type = $request->request->get('type'))) {
 		return $app->abort(400, 'Missing type');
 	}
+	if (!($name = $request->request->get('name'))) {
+		return $app->abort(400, 'Missing name');
+	}
 
 	try {
 		$board = BoardAggregate::loadFromHistory($boardId, $eventList);
-		$playerType = new PlayerType($type);
-		$board->join(new Player($playerType, $token));
+		$board->join(new PlayerType($type), new PlayerToken($token), $name);
 		$events = $board->getNotPersistedEventList();
 		$persister->persistList($events);
 		foreach($events as $event) {
@@ -119,8 +121,7 @@ $app->post('/game/move/{uuid}', function(
 
 	$board = BoardAggregate::loadFromHistory($boardId, $eventList);
 	try {
-		$playerType = new PlayerType($type);
-		$board->move(new Player($playerType, $token), $x, $y);
+		$board->move(new PlayerType($type), new PlayerToken($token), $x, $y);
 		$events = $board->getNotPersistedEventList();
 		$persister->persistList($events);
 		foreach($events as $event) {

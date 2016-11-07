@@ -7,6 +7,7 @@ use EsTest\Event\DomainEventList;
 use EsTest\Event\PlayerJoinedEvent;
 use EsTest\Event\PlayerWonEvent;
 use EsTest\Player\Player;
+use EsTest\Player\PlayerToken;
 use EsTest\Player\PlayerType;
 use Exception;
 use PHPUnit_Framework_MockObject_MockObject;
@@ -65,10 +66,8 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 		$boardId = $this->createAggregateId();
 		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
 		$board->create($boardId);
-		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
-		$playerO = $this->createPlayer(PlayerType::O(), 'efg');
-		$board->join($playerX);
-		$board->join($playerO);
+		$board->join(PlayerType::X(), new PlayerToken('abc'), 'Pepa');
+		$board->join(PlayerType::O(), new PlayerToken('efg'), 'Jana');
 
 		$events = $board->getNotPersistedEventList();
 		$this->assertCount(3, $events);
@@ -77,17 +76,19 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 		$this->assertInstanceOf(PlayerJoinedEvent::class, $events[1]);
 		$this->assertInstanceOf(PlayerJoinedEvent::class, $events[1]);
 
-		$this->assertEquals($playerX, $events[1]->getPlayer());
-		$this->assertEquals($playerO, $events[2]->getPlayer());
+		$this->assertEquals('Pepa', $events[1]->getPlayer()->getName());
+		$this->assertEquals('Jana', $events[2]->getPlayer()->getName());
+		$this->assertEquals(PlayerType::X(), $events[1]->getPlayer()->getType());
+		$this->assertEquals(PlayerType::O(), $events[2]->getPlayer()->getType());
 	}
 
 	public function testJoinPlayersAlreadyJoined() {
 		$boardId = $this->createAggregateId();
 		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
 		$board->create($boardId);
-		$board->join($this->createPlayer(PlayerType::X(), 'abc'));
+		$board->join(PlayerType::X(), new PlayerToken('abc'), 'Pepa');
 		try {
-			$board->join($this->createPlayer(PlayerType::X(), 'abc'));
+			$board->join(PlayerType::X(), new PlayerToken('cde'), 'Karel');
 			$this->fail('Can not join the same player type more than once.');
 		} catch (Exception $e) {
 			$this->assertInstanceOf(RuntimeException::class, $e);
@@ -98,10 +99,9 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 		$boardId = $this->createAggregateId();
 		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
 		$board->create($boardId);
-		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
-		$board->join($playerX);
+		$board->join(PlayerType::X(), new PlayerToken('abc'), 'Pepa');
 		try {
-			$board->move($playerX, 1, 1);
+			$board->move(PlayerType::X(), new PlayerToken('abc'), 1, 1);
 			$this->fail('Can not make move without both players joined.');
 		} catch (Exception $e) {
 			$this->assertInstanceOf(RuntimeException::class, $e);
@@ -112,14 +112,12 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 		$boardId = $this->createAggregateId();
 		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
 		$board->create($boardId);
-		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
-		$playerO = $this->createPlayer(PlayerType::O(), 'cde');
-		$board->join($playerX);
-		$board->join($playerO);
+		$board->join(PlayerType::X(), new PlayerToken('abc'), 'Pepa');
+		$board->join(PlayerType::O(), new PlayerToken('efg'), 'Jana');
 
 		try {
-			$playerX2 = $this->createPlayer(PlayerType::X(), 'abcd');
-			$board->move($playerX2, 0, 0);
+
+			$board->move(PlayerType::O(), new PlayerToken('efg-something-else'), 0, 0);
 			$this->fail('Can not make move - invalid token.');
 		} catch (Exception $e) {
 			$this->assertInstanceOf(RuntimeException::class, $e);
@@ -130,13 +128,11 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 		$boardId = $this->createAggregateId();
 		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
 		$board->create($boardId);
-		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
-		$playerO = $this->createPlayer(PlayerType::O(), 'cde');
-		$board->join($playerX);
-		$board->join($playerO);
+		$board->join(PlayerType::X(), new PlayerToken('abc'), 'Pepa');
+		$board->join(PlayerType::O(), new PlayerToken('efg'), 'Jana');
 
 		try {
-			$board->move($playerX, 0, BoardAggregate::BOARD_WIDTH);
+			$board->move(PlayerType::O(), new PlayerToken('efg'), 0, BoardAggregate::BOARD_WIDTH);
 			$this->fail('Can not make move out of board.');
 		} catch (Exception $e) {
 			$this->assertInstanceOf(RuntimeException::class, $e);
@@ -148,15 +144,12 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
 		$board->create($boardId);
 
-		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
-		$playerO = $this->createPlayer(PlayerType::O(), 'cde');
-
-		$board->join($playerX);
-		$board->join($playerO);
-		$board->move($playerX, 0, 0);
+		$board->join(PlayerType::X(), new PlayerToken('abc'), 'Pepa');
+		$board->join(PlayerType::O(), new PlayerToken('efg'), 'Jana');
+		$board->move(PlayerType::O(), new PlayerToken('efg'), 0, 0);
 
 		try {
-			$board->move($playerX, 0, 1);
+			$board->move(PlayerType::O(), new PlayerToken('efg'), 0, 1);
 			$this->fail('Same player can not make move twice in a row.');
 		} catch (Exception $e) {
 			$this->assertInstanceOf(RuntimeException::class, $e);
@@ -168,15 +161,12 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
 		$board->create($boardId);
 
-		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
-		$playerO = $this->createPlayer(PlayerType::O(), 'cde');
-
-		$board->join($playerX);
-		$board->join($playerO);
-		$board->move($playerX, 1, 1);
+		$board->join(PlayerType::X(), new PlayerToken('abc'), 'Pepa');
+		$board->join(PlayerType::O(), new PlayerToken('efg'), 'Jana');
+		$board->move(PlayerType::O(), new PlayerToken('efg'), 1, 1);
 
 		try {
-			$board->move($playerO, 1, 1);
+			$board->move(PlayerType::X(), new PlayerToken('abc'), 1, 1);
 			$this->fail('Can not place move to taken place.');
 		} catch (Exception $e) {
 			$this->assertInstanceOf(RuntimeException::class, $e);
@@ -188,25 +178,24 @@ class BoardAggregateTest extends PHPUnit_Framework_TestCase {
 		$board = BoardAggregate::loadFromHistory($boardId, new DomainEventList([]));
 		$board->create($boardId);
 
-		$playerX = $this->createPlayer(PlayerType::X(), 'abc');
-		$playerO = $this->createPlayer(PlayerType::O(), 'cde');
-
-		$board->join($playerX);
-		$board->join($playerO);
-		$board->move($playerX, 0, 0);
-		$board->move($playerO, 1, 1);
-		$board->move($playerX, 0, 1);
-		$board->move($playerO, 1, 3);
-		$board->move($playerX, 0, 2);
-		$board->move($playerO, 3, 3);
-		$board->move($playerX, 0, 3);
-		$board->move($playerO, 10, 3);
-		$board->move($playerX, 0, 4);
+		$board->join(PlayerType::X(), new PlayerToken('abc'), 'Pepa');
+		$board->join(PlayerType::O(), new PlayerToken('efg'), 'Jana');
+		
+		$board->move(PlayerType::X(), new PlayerToken('abc'), 0, 0);
+		$board->move(PlayerType::O(), new PlayerToken('efg'), 1, 1);
+		$board->move(PlayerType::X(), new PlayerToken('abc'), 0, 1);
+		$board->move(PlayerType::O(), new PlayerToken('efg'), 1, 3);
+		$board->move(PlayerType::X(), new PlayerToken('abc'), 0, 2);
+		$board->move(PlayerType::O(), new PlayerToken('efg'), 3, 3);
+		$board->move(PlayerType::X(), new PlayerToken('abc'), 0, 3);
+		$board->move(PlayerType::O(), new PlayerToken('efg'), 10, 3);
+		$board->move(PlayerType::X(), new PlayerToken('abc'), 0, 4);
 
 		$events = $board->getNotPersistedEventList();
 		$lastEvent = $events[count($events) - 1];
 		$this->assertInstanceOf(PlayerWonEvent::class, $lastEvent);
-		$this->assertEquals($playerX, $lastEvent->getPlayer());
+		$this->assertEquals('Pepa', $lastEvent->getPlayer()->getName());
+		$this->assertEquals(PlayerType::X(), $lastEvent->getPlayer()->getType());
 	}
 
 	public function testLoadFromHistory() {

@@ -8,6 +8,7 @@ use EsTest\Event\PlayerMovedEvent;
 use EsTest\Event\PlayerJoinedEvent;
 use EsTest\Event\PlayerWonEvent;
 use EsTest\Player\Player;
+use EsTest\Player\PlayerToken;
 use EsTest\Player\PlayerType;
 use RuntimeException;
 
@@ -22,18 +23,18 @@ class BoardAggregate extends AbstractAggregate {
 	private $players;
 	private $moveCount;
 
-	/** @var  Player */
+	/** @var Player */
 	private $winnerPlayer;
 
-	/** @var Player */
-	private $lastMovePlayer;
+	/** @var PlayerType */
+	private $lastMoveType;
 
 	protected function __construct(AggregateId $boardId) {
 		$this->boardId = $boardId;
 		$this->board = [];
 		$this->players = [];
 		$this->moveCount = 0;
-		$this->lastMovePlayer = null;
+		$this->lastMoveType = null;
 		$this->winnerPlayer = null;
 	}
 
@@ -53,22 +54,22 @@ class BoardAggregate extends AbstractAggregate {
 		$this->handle(new BoardWasCreatedEvent($boardId));
 	}
 
-	public function join(Player $player) {
-		$playerType = $player->getType();
-		if (isset($this->players[$playerType->getValue()])) {
-			throw new RuntimeException("Player {$playerType->getValue()} already joined board {$this->boardId}");
+	public function join(PlayerType $type, PlayerToken $token, $name) {
+		if (isset($this->players[$type->getValue()])) {
+			throw new RuntimeException("Player {$type->getValue()} already joined board {$this->boardId}");
 		}
-		$this->handle(new PlayerJoinedEvent($this->boardId, $player));
+
+		$this->handle(new PlayerJoinedEvent($this->boardId, new Player($type, $token, $name)));
 	}
 
-	public function move(Player $player, $x, $y) {
+	public function move(PlayerType $type, PlayerToken $token, $x, $y) {
 		if (count($this->players) !== 2) {
 			throw new RuntimeException("Both players must be joined to make move");
 		}
-		if ($this->lastMovePlayer && $this->lastMovePlayer->getType() === $player->getType()) {
-			throw new RuntimeException("Player {$player->getType()->getValue()} can not move twice in a row");
+		if ($this->lastMoveType && $this->lastMoveType === $type) {
+			throw new RuntimeException("Player {$type->getValue()} can not move twice in a row");
 		}
-		if (!$this->isSamePlayerToken($player)) {
+		if (!$this->isSamePlayerTypeToken($type, $token)) {
 			throw new RuntimeException("Invalid token");
 		}
 		if ($this->winnerPlayer) {
@@ -80,14 +81,16 @@ class BoardAggregate extends AbstractAggregate {
 		if ($this->isPositionFree($x, $y)) {
 			throw new RuntimeException("Position is not free [{$x}, {$y}]");
 		}
+
+		$player = $this->players[$type->getValue()];
 		$this->handle(new PlayerMovedEvent($this->boardId, $player, $x, $y));
 		if ($this->isFinalMove()) {
 			$this->handle(new PlayerWonEvent($this->boardId, $player));
 		}
 	}
 
-	private function isSamePlayerToken(Player $player) {
-		return $this->players[$player->getType()->getValue()]->getToken() === $player->getToken();
+	private function isSamePlayerTypeToken(PlayerType $type, PlayerToken $token) {
+		return $this->players[$type->getValue()]->getToken()->isEqual($token);
 	}
 
 	private function isPositionValid($x, $y) {
