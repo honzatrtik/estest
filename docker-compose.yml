@@ -1,6 +1,49 @@
 version: '2'
 services:
 
+  api:
+    image: php:7.0.12-alpine
+    volumes:
+      - ".:/data"
+    command: php -S 0.0.0.0:8000 /data/app/app.php
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+      - rabbitmq
+
+  consumer:
+    build: ./docker/php
+    volumes:
+      - ".:/data"
+    command: /data/wait-for-it.sh rabbitmq:5672 -- php /data/app/consumer.php
+    depends_on:
+      - rabbitmq
+      - mysql
+      - rethinkdb
+
+  app:
+    image: node:6
+    volumes:
+      - "./nodeSrc:/data"
+    command: node /data/server.js
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+      - proxy
+
+  proxy:
+    image: node:6
+    volumes:
+      - "./nodeSrc:/data"
+    command: node /data/proxy.js
+    ports:
+      - "8888:8888"
+    depends_on:
+      - rethinkdb
+
+
   rabbitmq:
     image: rabbitmq:3-management
     hostname: rabbitmq
@@ -12,9 +55,17 @@ services:
 
   mysql:
     image: mysql:5.7
+    volumes:
+      - "./sql/init.sql:/docker-entrypoint-initdb.d/init.sql"
     ports:
       - "3307:3306"
     environment:
       - "MYSQL_ROOT_PASSWORD=root"
       - "MYSQL_DATABASE=estest"
 
+  rethinkdb:
+    image: greyarch/rethinkdb
+    ports:
+      - "8080:8080"
+      - "28015:28015"
+      - "29015:29015"
