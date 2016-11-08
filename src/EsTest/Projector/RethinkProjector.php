@@ -7,6 +7,7 @@ use EsTest\Event\PlayerJoinedEvent;
 use EsTest\Event\PlayerMovedEvent;
 use EsTest\Event\PlayerWonEvent;
 use r\Connection;
+use r\Exceptions\RqlServerError;
 use r\ValuedQuery\ValuedQuery;
 use r;
 
@@ -21,7 +22,16 @@ class RethinkProjector implements ProjectorInterface {
 	}
 
 	public function reset() {
-		r\table('board')->delete()->run($this->connection);
+		try {
+			r\tableCreate('board');
+		} catch(RqlServerError $e) {
+			print $e->getMessage() . PHP_EOL;
+		}
+		try {
+			r\table('board')->delete()->run($this->connection);
+		} catch(RqlServerError $e) {
+			print $e->getMessage() . PHP_EOL;
+		}
 	}
 
 	protected function handleBoardWasCreated(BoardWasCreatedEvent $event) {
@@ -30,6 +40,7 @@ class RethinkProjector implements ProjectorInterface {
 			'finished' => false,
 			'players' => [],
 			'board' => $this->getFilledArray(20, 20),
+			'updated' => time()
 		])->run($this->connection);
 	}
 
@@ -38,7 +49,11 @@ class RethinkProjector implements ProjectorInterface {
 		$playerTypeValue = $player->getType()->getValue();
 		r\table('board')->get($event->getAggregateId()->toString())
 			->update([
-				'players' => r\row('players')->append([$playerTypeValue => $player->getToken()])
+				'players' => r\row('players')->append([
+					'type' => $playerTypeValue,
+					'name' => $player->getName(),
+				]),
+				'updated' => time(),
 			])
 			->run($this->connection);
 	}
@@ -52,7 +67,8 @@ class RethinkProjector implements ProjectorInterface {
 			->update(function(ValuedQuery $row) use ($x, $y, $playerTypeValue) {
 				$board = $row->getField('board');
 				return [
-					'board' => $board->changeAt($y, $board(0)->changeAt($x, $playerTypeValue))
+					'board' => $board->changeAt($y, $board(0)->changeAt($x, $playerTypeValue)),
+					'updated' => time(),
 				];
 			})
 			->run($this->connection);
@@ -64,8 +80,9 @@ class RethinkProjector implements ProjectorInterface {
 		r\table('board')->get($event->getAggregateId()->toString())->update([
 			'winner' => [
 				'type' => $playerTypeValue,
-				'token' => $player->getToken(),
+				'name' => $player->getName(),
 			],
+			'updated' => time(),
 		])->run($this->connection);
 	}
 

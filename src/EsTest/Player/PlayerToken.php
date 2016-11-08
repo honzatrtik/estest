@@ -4,17 +4,17 @@ namespace EsTest\Player;
 
 class PlayerToken {
 
-	private $token;
+	private $value;
 
-	public function __construct($token) {
-		$this->token = $token;
+	public function __construct($value) {
+		$this->value = $value;
 	}
 
-	public function getToken() {
-		return $this->token;
+	public function getValue() {
+		return $this->value;
 	}
 
 	public function isEqual(PlayerToken $token) {
-		return $this->getToken() === $token->getToken();
+		return $this->getValue() === $token->getValue();
 	}
 }
